@@ -1,6 +1,13 @@
 <?php
 $platforms = platform_options();
 $hydratedAds = hydrate_ads($ads);
+$editingTitle = $editingAd !== null && isset($editingAd['title']) ? $editingAd['title'] : '';
+$editingPlatform = $editingAd !== null && isset($editingAd['platform']) ? $editingAd['platform'] : '';
+$editingDetails = $editingAd !== null && isset($editingAd['details']) ? $editingAd['details'] : '';
+$editingLastAdvertised = $editingAd !== null && isset($editingAd['last_advertised_at']) ? $editingAd['last_advertised_at'] : now_date();
+$editingRepeatDays = $editingAd !== null && isset($editingAd['repeat_every_days']) ? $editingAd['repeat_every_days'] : 7;
+$editingNotes = $editingAd !== null && isset($editingAd['notes']) ? $editingAd['notes'] : '';
+$editingPhotos = $editingAd !== null && isset($editingAd['photos']) && is_array($editingAd['photos']) ? $editingAd['photos'] : [];
 ?>
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
     <div>
@@ -20,14 +27,14 @@ $hydratedAds = hydrate_ads($ads);
                     <?php endif; ?>
                     <div>
                         <label class="form-label">Ad Title</label>
-                        <input type="text" name="title" class="form-control" required value="<?= e($editingAd['title'] ?? '') ?>">
+                        <input type="text" name="title" class="form-control" required value="<?= e($editingTitle) ?>">
                     </div>
                     <div>
                         <label class="form-label">Platform</label>
                         <select name="platform" class="form-select" required>
                             <option value="">Choose platform</option>
                             <?php foreach ($platforms as $platform): ?>
-                                <option value="<?= e($platform) ?>" <?= (($editingAd['platform'] ?? '') === $platform) ? 'selected' : '' ?>>
+                                <option value="<?= e($platform) ?>" <?= ($editingPlatform === $platform) ? 'selected' : '' ?>>
                                     <?= e(ucwords($platform)) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -35,35 +42,35 @@ $hydratedAds = hydrate_ads($ads);
                     </div>
                     <div>
                         <label class="form-label">Ad Details</label>
-                        <textarea name="details" rows="8" class="form-control" required><?= e($editingAd['details'] ?? '') ?></textarea>
+                        <textarea name="details" rows="8" class="form-control" required><?= e($editingDetails) ?></textarea>
                     </div>
                     <div class="row g-3">
                         <div class="col-sm-6">
                             <label class="form-label">Last Advertised</label>
-                            <input type="date" name="last_advertised_at" class="form-control" required value="<?= e($editingAd['last_advertised_at'] ?? now_date()) ?>">
+                            <input type="date" name="last_advertised_at" class="form-control" required value="<?= e($editingLastAdvertised) ?>">
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label">Repeat Every (days)</label>
-                            <input type="number" min="1" name="repeat_every_days" class="form-control" required value="<?= e((string) ($editingAd['repeat_every_days'] ?? 7)) ?>">
+                            <input type="number" min="1" name="repeat_every_days" class="form-control" required value="<?= e((string) $editingRepeatDays) ?>">
                         </div>
                     </div>
                     <div>
                         <label class="form-label">Notes</label>
-                        <textarea name="notes" rows="3" class="form-control"><?= e($editingAd['notes'] ?? '') ?></textarea>
+                        <textarea name="notes" rows="3" class="form-control"><?= e($editingNotes) ?></textarea>
                     </div>
                     <div>
                         <label class="form-label">Photos</label>
                         <input type="file" name="photos[]" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
                         <div class="form-text">Upload one or more ad photos. Max 5MB each.</div>
                     </div>
-                    <?php if ($editingAd !== null && ($editingAd['photos'] ?? []) !== []): ?>
+                    <?php if ($editingAd !== null && $editingPhotos !== []): ?>
                         <div>
                             <div class="small text-secondary mb-2">Current Photos</div>
                             <div class="photo-grid photo-grid-editor">
-                                <?php foreach ($editingAd['photos'] as $photoIndex => $photo): ?>
+                                <?php foreach ($editingPhotos as $photoIndex => $photo): ?>
                                     <div class="photo-card">
-                                        <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
-                                        <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                        <img src="<?= e($photo['path']) ?>" alt="<?= e(isset($photo['name']) ? $photo['name'] : 'Ad photo') ?>" class="photo-thumb">
+                                        <div class="photo-meta"><?= e(isset($photo['name']) ? $photo['name'] : 'Photo') ?></div>
                                         <form method="post" action="index.php?action=delete-photo">
                                             <input type="hidden" name="ad_id" value="<?= e($editingAd['id']) ?>">
                                             <input type="hidden" name="photo_index" value="<?= e((string) $photoIndex) ?>">
@@ -100,18 +107,18 @@ $hydratedAds = hydrate_ads($ads);
                                         </div>
                                         <?php if ($currentUser['role'] === 'admin'): ?>
                                             <?php $owner = find_user_by_id($ad['user_id']); ?>
-                                            <div class="small text-secondary mb-2">Owner: <?= e($owner['name'] ?? 'Unknown') ?></div>
+                                            <div class="small text-secondary mb-2">Owner: <?= e(isset($owner['name']) ? $owner['name'] : 'Unknown') ?></div>
                                         <?php endif; ?>
                                     </div>
                                     <span class="badge rounded-pill soft-badge"><?= e((string) $ad['repeat_every_days']) ?> day cycle</span>
                                 </div>
                                 <pre id="ad-list-copy-<?= e($ad['id']) ?>" class="copy-box mt-3 mb-3"><?= e($ad['details']) ?></pre>
-                                <?php if (($ad['photos'] ?? []) !== []): ?>
+                                <?php if (isset($ad['photos']) && $ad['photos'] !== []): ?>
                                     <div class="photo-grid mb-3">
                                         <?php foreach ($ad['photos'] as $photo): ?>
                                             <a href="<?= e($photo['path']) ?>" target="_blank" rel="noreferrer" class="photo-card photo-link">
-                                                <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
-                                                <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                                <img src="<?= e($photo['path']) ?>" alt="<?= e(isset($photo['name']) ? $photo['name'] : 'Ad photo') ?>" class="photo-thumb">
+                                                <div class="photo-meta"><?= e(isset($photo['name']) ? $photo['name'] : 'Photo') ?></div>
                                             </a>
                                         <?php endforeach; ?>
                                     </div>

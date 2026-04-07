@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-function initialize_storage(): void
+function initialize_storage()
 {
     $dataDir = app_path('data');
     $uploadDir = ad_upload_directory();
@@ -37,7 +35,7 @@ function initialize_storage(): void
     }
 }
 
-function read_json(string $name): array
+function read_json($name)
 {
     $content = file_get_contents(storage_file($name));
 
@@ -50,7 +48,7 @@ function read_json(string $name): array
     return is_array($decoded) ? $decoded : [];
 }
 
-function write_json(string $name, array $data): void
+function write_json($name, $data)
 {
     file_put_contents(
         storage_file($name),
@@ -58,27 +56,27 @@ function write_json(string $name, array $data): void
     );
 }
 
-function get_users(): array
+function get_users()
 {
     return read_json('users');
 }
 
-function save_users(array $users): void
+function save_users($users)
 {
     write_json('users', array_values($users));
 }
 
-function get_ads(): array
+function get_ads()
 {
     return array_map('normalize_ad_record', read_json('ads'));
 }
 
-function save_ads(array $ads): void
+function save_ads($ads)
 {
     write_json('ads', array_values($ads));
 }
 
-function create_user(string $name, string $username, string $password, string $role): void
+function create_user($name, $username, $password, $role)
 {
     $users = get_users();
     $users[] = [
@@ -93,40 +91,46 @@ function create_user(string $name, string $username, string $password, string $r
     save_users($users);
 }
 
-function delete_user(string $userId): void
+function delete_user($userId)
 {
-    $removedAds = array_values(array_filter(get_ads(), static fn(array $ad): bool => $ad['user_id'] === $userId));
-    $users = array_filter(get_users(), static fn(array $user): bool => $user['id'] !== $userId);
-    $ads = array_filter(get_ads(), static fn(array $ad): bool => $ad['user_id'] !== $userId);
+    $removedAds = array_values(array_filter(get_ads(), static function ($ad) use ($userId) {
+        return $ad['user_id'] === $userId;
+    }));
+    $users = array_filter(get_users(), static function ($user) use ($userId) {
+        return $user['id'] !== $userId;
+    });
+    $ads = array_filter(get_ads(), static function ($ad) use ($userId) {
+        return $ad['user_id'] !== $userId;
+    });
 
     foreach ($removedAds as $ad) {
-        delete_ad_photo_files($ad['photos'] ?? []);
+        delete_ad_photo_files(isset($ad['photos']) ? $ad['photos'] : []);
     }
 
     save_users($users);
     save_ads($ads);
 }
 
-function create_ad(array $payload, array $currentUser): void
+function create_ad($payload, $currentUser)
 {
     $ads = get_ads();
     $ads[] = [
         'id' => uniqid('ad_', true),
-        'user_id' => $currentUser['role'] === 'admin' ? ($payload['user_id'] ?? $currentUser['id']) : $currentUser['id'],
+        'user_id' => $currentUser['role'] === 'admin' ? (isset($payload['user_id']) ? $payload['user_id'] : $currentUser['id']) : $currentUser['id'],
         'title' => $payload['title'],
         'platform' => $payload['platform'],
         'details' => $payload['details'],
         'last_advertised_at' => $payload['last_advertised_at'],
         'repeat_every_days' => (int) $payload['repeat_every_days'],
         'notes' => $payload['notes'],
-        'photos' => $payload['photos'] ?? [],
+        'photos' => isset($payload['photos']) ? $payload['photos'] : [],
         'created_at' => date(DATE_ATOM),
     ];
 
     save_ads($ads);
 }
 
-function update_ad(string $adId, array $payload, array $currentUser): void
+function update_ad($adId, $payload, $currentUser)
 {
     $ads = get_ads();
 
@@ -145,7 +149,10 @@ function update_ad(string $adId, array $payload, array $currentUser): void
         $ad['last_advertised_at'] = $payload['last_advertised_at'];
         $ad['repeat_every_days'] = (int) $payload['repeat_every_days'];
         $ad['notes'] = $payload['notes'];
-        $ad['photos'] = array_merge($ad['photos'] ?? [], $payload['photos'] ?? []);
+        $ad['photos'] = array_merge(
+            isset($ad['photos']) ? $ad['photos'] : [],
+            isset($payload['photos']) ? $payload['photos'] : []
+        );
         break;
     }
 
@@ -154,7 +161,7 @@ function update_ad(string $adId, array $payload, array $currentUser): void
     save_ads($ads);
 }
 
-function mark_ad_as_advertised(string $adId, array $currentUser): void
+function mark_ad_as_advertised($adId, $currentUser)
 {
     $ads = get_ads();
 
@@ -176,20 +183,20 @@ function mark_ad_as_advertised(string $adId, array $currentUser): void
     save_ads($ads);
 }
 
-function delete_ad(string $adId, array $currentUser): void
+function delete_ad($adId, $currentUser)
 {
-    $ads = array_filter(get_ads(), static function (array $ad) use ($adId, $currentUser): bool {
+    $ads = array_filter(get_ads(), static function ($ad) use ($adId, $currentUser) {
         if ($ad['id'] !== $adId) {
             return true;
         }
 
         if ($currentUser['role'] === 'admin') {
-            delete_ad_photo_files($ad['photos'] ?? []);
+            delete_ad_photo_files(isset($ad['photos']) ? $ad['photos'] : []);
             return false;
         }
 
         if ($ad['user_id'] === $currentUser['id']) {
-            delete_ad_photo_files($ad['photos'] ?? []);
+            delete_ad_photo_files(isset($ad['photos']) ? $ad['photos'] : []);
         }
 
         return $ad['user_id'] !== $currentUser['id'];
@@ -198,7 +205,7 @@ function delete_ad(string $adId, array $currentUser): void
     save_ads($ads);
 }
 
-function get_ads_for_user(?array $currentUser): array
+function get_ads_for_user($currentUser)
 {
     if ($currentUser === null) {
         return [];
@@ -212,11 +219,13 @@ function get_ads_for_user(?array $currentUser): array
 
     return array_values(array_filter(
         $ads,
-        static fn(array $ad): bool => $ad['user_id'] === $currentUser['id']
+        static function ($ad) use ($currentUser) {
+            return $ad['user_id'] === $currentUser['id'];
+        }
     ));
 }
 
-function find_ad_for_user(string $adId, array $currentUser): ?array
+function find_ad_for_user($adId, $currentUser)
 {
     foreach (get_ads_for_user($currentUser) as $ad) {
         if ($ad['id'] === $adId) {
@@ -227,14 +236,14 @@ function find_ad_for_user(string $adId, array $currentUser): ?array
     return null;
 }
 
-function normalize_ad_record(array $ad): array
+function normalize_ad_record($ad)
 {
     $ad['photos'] = isset($ad['photos']) && is_array($ad['photos']) ? array_values($ad['photos']) : [];
 
     return $ad;
 }
 
-function store_uploaded_ad_photos(array $files): array
+function store_uploaded_ad_photos($files)
 {
     if ($files === [] || !isset($files['name']) || !is_array($files['name'])) {
         return [];
@@ -250,7 +259,7 @@ function store_uploaded_ad_photos(array $files): array
     $storedPhotos = [];
 
     foreach ($files['name'] as $index => $originalName) {
-        $error = $files['error'][$index] ?? UPLOAD_ERR_NO_FILE;
+        $error = isset($files['error'][$index]) ? $files['error'][$index] : UPLOAD_ERR_NO_FILE;
 
         if ($error === UPLOAD_ERR_NO_FILE) {
             continue;
@@ -261,8 +270,8 @@ function store_uploaded_ad_photos(array $files): array
             throw new RuntimeException('Photo upload failed. Please try again.');
         }
 
-        $tmpName = $files['tmp_name'][$index] ?? '';
-        $size = (int) ($files['size'][$index] ?? 0);
+        $tmpName = isset($files['tmp_name'][$index]) ? $files['tmp_name'][$index] : '';
+        $size = (int) (isset($files['size'][$index]) ? $files['size'][$index] : 0);
 
         if ($size > 5 * 1024 * 1024) {
             delete_ad_photo_files($storedPhotos);
@@ -270,7 +279,7 @@ function store_uploaded_ad_photos(array $files): array
         }
 
         $mimeType = $finfo->file($tmpName);
-        $extension = $allowedMimeTypes[$mimeType] ?? null;
+        $extension = isset($allowedMimeTypes[$mimeType]) ? $allowedMimeTypes[$mimeType] : null;
 
         if ($extension === null) {
             delete_ad_photo_files($storedPhotos);
@@ -295,10 +304,10 @@ function store_uploaded_ad_photos(array $files): array
     return $storedPhotos;
 }
 
-function delete_ad_photo_files(array $photos): void
+function delete_ad_photo_files($photos)
 {
     foreach ($photos as $photo) {
-        $photoPath = $photo['path'] ?? '';
+        $photoPath = isset($photo['path']) ? $photo['path'] : '';
 
         if (!is_string($photoPath) || $photoPath === '') {
             continue;
@@ -312,7 +321,7 @@ function delete_ad_photo_files(array $photos): void
     }
 }
 
-function delete_ad_photo(string $adId, int $photoIndex, array $currentUser): bool
+function delete_ad_photo($adId, $photoIndex, $currentUser)
 {
     $ads = get_ads();
 
@@ -337,6 +346,10 @@ function delete_ad_photo(string $adId, int $photoIndex, array $currentUser): boo
 
         return true;
     }
+
+    unset($ad);
+
+    return false;
 
     unset($ad);
 

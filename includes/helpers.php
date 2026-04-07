@@ -1,27 +1,25 @@
 <?php
 
-declare(strict_types=1);
-
-function app_path(string $path = ''): string
+function app_path($path = '')
 {
     $basePath = dirname(__DIR__);
 
     return $path === '' ? $basePath : $basePath . DIRECTORY_SEPARATOR . $path;
 }
 
-function redirect(string $action): void
+function redirect($action)
 {
     header('Location: index.php?action=' . urlencode($action));
     exit;
 }
 
-function redirect_to(string $query): void
+function redirect_to($query)
 {
     header('Location: index.php?' . ltrim($query, '?'));
     exit;
 }
 
-function set_flash(string $type, string $message): void
+function set_flash($type, $message)
 {
     $_SESSION['flash'] = [
         'type' => $type,
@@ -29,32 +27,32 @@ function set_flash(string $type, string $message): void
     ];
 }
 
-function get_flash(): ?array
+function get_flash()
 {
-    $flash = $_SESSION['flash'] ?? null;
+    $flash = isset($_SESSION['flash']) ? $_SESSION['flash'] : null;
     unset($_SESSION['flash']);
 
     return $flash;
 }
 
-function e(string $value): string
+function e($value)
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-function now_date(): string
+function now_date()
 {
     return date('Y-m-d');
 }
 
-function calculate_next_date(string $lastAdvertisedAt, int $repeatEveryDays): string
+function calculate_next_date($lastAdvertisedAt, $repeatEveryDays)
 {
     $date = new DateTimeImmutable($lastAdvertisedAt);
 
     return $date->modify('+' . $repeatEveryDays . ' days')->format('Y-m-d');
 }
 
-function days_until(string $date): int
+function days_until($date)
 {
     $today = new DateTimeImmutable(now_date());
     $target = new DateTimeImmutable($date);
@@ -62,12 +60,12 @@ function days_until(string $date): int
     return (int) $today->diff($target)->format('%r%a');
 }
 
-function platform_options(): array
+function platform_options()
 {
     return ['carousell', 'mudah.my', 'facebook marketplace'];
 }
 
-function hydrate_ads(array $ads): array
+function hydrate_ads($ads)
 {
     foreach ($ads as &$ad) {
         $ad['next_advertise_at'] = calculate_next_date($ad['last_advertised_at'], (int) $ad['repeat_every_days']);
@@ -78,29 +76,31 @@ function hydrate_ads(array $ads): array
 
     unset($ad);
 
-    usort($ads, static function (array $left, array $right): int {
+    usort($ads, static function ($left, $right) {
         return strcmp($left['next_advertise_at'], $right['next_advertise_at']);
     });
 
     return $ads;
 }
 
-function count_ads_by_status(array $ads, string $status): int
+function count_ads_by_status($ads, $status)
 {
-    return count(array_filter($ads, static fn(array $ad): bool => $ad['status'] === $status));
+    return count(array_filter($ads, static function ($ad) use ($status) {
+        return $ad['status'] === $status;
+    }));
 }
 
-function storage_file(string $name): string
+function storage_file($name)
 {
     return app_path('data' . DIRECTORY_SEPARATOR . $name . '.json');
 }
 
-function ad_upload_directory(): string
+function ad_upload_directory()
 {
     return app_path('uploads' . DIRECTORY_SEPARATOR . 'ad_photos');
 }
 
-function ad_upload_relative_path(string $filename): string
+function ad_upload_relative_path($filename)
 {
     return 'uploads/ad_photos/' . $filename;
 }

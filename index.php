@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
 require __DIR__ . '/includes/bootstrap.php';
 
-$action = $_GET['action'] ?? 'dashboard';
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$action = isset($_GET['action']) ? $_GET['action'] : 'dashboard';
+$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 $flash = get_flash();
 
 if ($action === 'login' && $method === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     if (attempt_login($username, $password)) {
         set_flash('success', 'Welcome back.');
@@ -34,9 +32,9 @@ if (!is_logged_in() && $action !== 'login') {
 if ($action === 'users' && $method === 'POST') {
     require_admin();
 
-    $name = trim($_POST['name'] ?? '');
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $name = trim(isset($_POST['name']) ? $_POST['name'] : '');
+    $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     if ($name === '' || $username === '' || $password === '') {
         set_flash('danger', 'Name, username, and password are required.');
@@ -56,7 +54,7 @@ if ($action === 'users' && $method === 'POST') {
 if ($action === 'delete-user' && $method === 'POST') {
     require_admin();
 
-    $userId = $_POST['user_id'] ?? '';
+    $userId = isset($_POST['user_id']) ? $_POST['user_id'] : '';
 
     if ($userId === current_user()['id']) {
         set_flash('danger', 'You cannot delete your own account.');
@@ -71,25 +69,33 @@ if ($action === 'delete-user' && $method === 'POST') {
 if ($action === 'ads' && $method === 'POST') {
     require_login();
 
-    $title = trim($_POST['title'] ?? '');
-    $platform = trim($_POST['platform'] ?? '');
-    $details = trim($_POST['details'] ?? '');
-    $lastAdvertisedAt = $_POST['last_advertised_at'] ?? '';
-    $repeatEveryDays = (int) ($_POST['repeat_every_days'] ?? 0);
-    $notes = trim($_POST['notes'] ?? '');
-    $adId = $_POST['ad_id'] ?? '';
+    $title = trim(isset($_POST['title']) ? $_POST['title'] : '');
+    $platform = trim(isset($_POST['platform']) ? $_POST['platform'] : '');
+    $details = trim(isset($_POST['details']) ? $_POST['details'] : '');
+    $lastAdvertisedAt = isset($_POST['last_advertised_at']) ? $_POST['last_advertised_at'] : '';
+    $repeatEveryDays = (int) (isset($_POST['repeat_every_days']) ? $_POST['repeat_every_days'] : 0);
+    $notes = trim(isset($_POST['notes']) ? $_POST['notes'] : '');
+    $adId = isset($_POST['ad_id']) ? $_POST['ad_id'] : '';
     $uploadedPhotos = [];
 
     if ($title === '' || $platform === '' || $details === '' || $lastAdvertisedAt === '' || $repeatEveryDays < 1) {
         set_flash('danger', 'Title, platform, details, advertised date, and repeat schedule are required.');
-        $adId !== '' ? redirect_to('action=ads&edit=' . urlencode($adId)) : redirect('ads');
+        if ($adId !== '') {
+            redirect_to('action=ads&edit=' . urlencode($adId));
+        }
+
+        redirect('ads');
     }
 
     try {
-        $uploadedPhotos = store_uploaded_ad_photos($_FILES['photos'] ?? []);
+        $uploadedPhotos = store_uploaded_ad_photos(isset($_FILES['photos']) ? $_FILES['photos'] : []);
     } catch (RuntimeException $exception) {
         set_flash('danger', $exception->getMessage());
-        $adId !== '' ? redirect_to('action=ads&edit=' . urlencode($adId)) : redirect('ads');
+        if ($adId !== '') {
+            redirect_to('action=ads&edit=' . urlencode($adId));
+        }
+
+        redirect('ads');
     }
 
     $payload = [
@@ -116,8 +122,8 @@ if ($action === 'ads' && $method === 'POST') {
 if ($action === 'delete-photo' && $method === 'POST') {
     require_login();
 
-    $adId = $_POST['ad_id'] ?? '';
-    $photoIndex = (int) ($_POST['photo_index'] ?? -1);
+    $adId = isset($_POST['ad_id']) ? $_POST['ad_id'] : '';
+    $photoIndex = (int) (isset($_POST['photo_index']) ? $_POST['photo_index'] : -1);
 
     if (!delete_ad_photo($adId, $photoIndex, current_user())) {
         set_flash('danger', 'Photo could not be removed.');
@@ -130,14 +136,14 @@ if ($action === 'delete-photo' && $method === 'POST') {
 
 if ($action === 'mark-advertised' && $method === 'POST') {
     require_login();
-    mark_ad_as_advertised($_POST['ad_id'] ?? '', current_user());
+    mark_ad_as_advertised(isset($_POST['ad_id']) ? $_POST['ad_id'] : '', current_user());
     set_flash('success', 'Advertised date updated to today.');
     redirect('dashboard');
 }
 
 if ($action === 'delete-ad' && $method === 'POST') {
     require_login();
-    delete_ad($_POST['ad_id'] ?? '', current_user());
+    delete_ad(isset($_POST['ad_id']) ? $_POST['ad_id'] : '', current_user());
     set_flash('success', 'Ad deleted.');
     redirect('ads');
 }
@@ -158,7 +164,7 @@ if ($action === 'ads') {
     require_login();
     $pageTitle = 'Manage Ads';
     $ads = get_ads_for_user($currentUser);
-    $editId = $_GET['edit'] ?? '';
+    $editId = isset($_GET['edit']) ? $_GET['edit'] : '';
     $editingAd = $editId !== '' ? find_ad_for_user($editId, $currentUser) : null;
 }
 

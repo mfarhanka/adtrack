@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-function find_user_by_username(string $username): ?array
+function find_user_by_username($username)
 {
     foreach (get_users() as $user) {
         if (strcasecmp($user['username'], $username) === 0) {
@@ -13,7 +11,7 @@ function find_user_by_username(string $username): ?array
     return null;
 }
 
-function find_user_by_id(string $userId): ?array
+function find_user_by_id($userId)
 {
     foreach (get_users() as $user) {
         if ($user['id'] === $userId) {
@@ -24,7 +22,7 @@ function find_user_by_id(string $userId): ?array
     return null;
 }
 
-function attempt_login(string $username, string $password): bool
+function attempt_login($username, $password)
 {
     $user = find_user_by_username($username);
 
@@ -37,9 +35,9 @@ function attempt_login(string $username, string $password): bool
     return true;
 }
 
-function current_user(): ?array
+function current_user()
 {
-    $userId = $_SESSION['user_id'] ?? null;
+    $userId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 
     if (!is_string($userId)) {
         return null;
@@ -48,19 +46,19 @@ function current_user(): ?array
     return find_user_by_id($userId);
 }
 
-function is_logged_in(): bool
+function is_logged_in()
 {
     return current_user() !== null;
 }
 
-function require_login(): void
+function require_login()
 {
     if (!is_logged_in()) {
         redirect('login');
     }
 }
 
-function require_admin(): void
+function require_admin()
 {
     $user = current_user();
 
@@ -70,7 +68,7 @@ function require_admin(): void
     }
 }
 
-function logout_user(): void
+function logout_user()
 {
     unset($_SESSION['user_id']);
 }

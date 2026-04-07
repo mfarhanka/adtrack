@@ -1,6 +1,10 @@
 <?php
-$dueAds = array_values(array_filter($ads, static fn(array $ad): bool => $ad['status'] !== 'upcoming'));
-$upcomingAds = array_values(array_filter($ads, static fn(array $ad): bool => $ad['status'] === 'upcoming'));
+$dueAds = array_values(array_filter($ads, static function ($ad) {
+    return $ad['status'] !== 'upcoming';
+}));
+$upcomingAds = array_values(array_filter($ads, static function ($ad) {
+    return $ad['status'] === 'upcoming';
+}));
 ?>
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
     <div>
@@ -67,12 +71,12 @@ $upcomingAds = array_values(array_filter($ads, static fn(array $ad): bool => $ad
                                     </span>
                                 </div>
                                 <pre id="ad-copy-<?= e($ad['id']) ?>" class="copy-box mb-3"><?= e($ad['details']) ?></pre>
-                                <?php if (($ad['photos'] ?? []) !== []): ?>
+                                <?php if (isset($ad['photos']) && $ad['photos'] !== []): ?>
                                     <div class="photo-grid mb-3">
                                         <?php foreach ($ad['photos'] as $photo): ?>
                                             <a href="<?= e($photo['path']) ?>" target="_blank" rel="noreferrer" class="photo-card photo-link">
-                                                <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
-                                                <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                                <img src="<?= e($photo['path']) ?>" alt="<?= e(isset($photo['name']) ? $photo['name'] : 'Ad photo') ?>" class="photo-thumb">
+                                                <div class="photo-meta"><?= e(isset($photo['name']) ? $photo['name'] : 'Photo') ?></div>
                                             </a>
                                         <?php endforeach; ?>
                                     </div>
