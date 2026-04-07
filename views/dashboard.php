@@ -67,6 +67,16 @@ $upcomingAds = array_values(array_filter($ads, static fn(array $ad): bool => $ad
                                     </span>
                                 </div>
                                 <pre id="ad-copy-<?= e($ad['id']) ?>" class="copy-box mb-3"><?= e($ad['details']) ?></pre>
+                                <?php if (($ad['photos'] ?? []) !== []): ?>
+                                    <div class="photo-grid mb-3">
+                                        <?php foreach ($ad['photos'] as $photo): ?>
+                                            <a href="<?= e($photo['path']) ?>" target="_blank" rel="noreferrer" class="photo-card photo-link">
+                                                <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
+                                                <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button type="button" class="btn btn-outline-danger btn-sm" data-copy-target="#ad-copy-<?= e($ad['id']) ?>">Copy details</button>
                                     <form method="post" action="index.php?action=mark-advertised">

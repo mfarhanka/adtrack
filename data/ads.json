@@ -8,6 +8,23 @@
         "last_advertised_at": "2026-04-07",
         "repeat_every_days": 3,
         "notes": "",
-        "created_at": "2026-04-07T10:27:30+02:00"
+        "created_at": "2026-04-07T10:27:30+02:00",
+        "photos": [
+            {
+                "path": "uploads/ad_photos/photo_69d4c3154269b7.28271303.png",
+                "name": "Screenshot_30.png",
+                "uploaded_at": "2026-04-07T10:40:53+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69d4c31542ca01.76392858.png",
+                "name": "Screenshot_29.png",
+                "uploaded_at": "2026-04-07T10:40:53+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69d4c31545a0b4.38757255.png",
+                "name": "Screenshot_28.png",
+                "uploaded_at": "2026-04-07T10:40:53+02:00"
+            }
+        ]
     }
 ]

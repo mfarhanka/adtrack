@@ -78,10 +78,18 @@ if ($action === 'ads' && $method === 'POST') {
     $repeatEveryDays = (int) ($_POST['repeat_every_days'] ?? 0);
     $notes = trim($_POST['notes'] ?? '');
     $adId = $_POST['ad_id'] ?? '';
+    $uploadedPhotos = [];
 
     if ($title === '' || $platform === '' || $details === '' || $lastAdvertisedAt === '' || $repeatEveryDays < 1) {
         set_flash('danger', 'Title, platform, details, advertised date, and repeat schedule are required.');
-        redirect('ads');
+        $adId !== '' ? redirect_to('action=ads&edit=' . urlencode($adId)) : redirect('ads');
+    }
+
+    try {
+        $uploadedPhotos = store_uploaded_ad_photos($_FILES['photos'] ?? []);
+    } catch (RuntimeException $exception) {
+        set_flash('danger', $exception->getMessage());
+        $adId !== '' ? redirect_to('action=ads&edit=' . urlencode($adId)) : redirect('ads');
     }
 
     $payload = [
@@ -91,6 +99,7 @@ if ($action === 'ads' && $method === 'POST') {
         'last_advertised_at' => $lastAdvertisedAt,
         'repeat_every_days' => $repeatEveryDays,
         'notes' => $notes,
+        'photos' => $uploadedPhotos,
     ];
 
     if ($adId !== '') {
@@ -102,6 +111,21 @@ if ($action === 'ads' && $method === 'POST') {
     }
 
     redirect('ads');
+}
+
+if ($action === 'delete-photo' && $method === 'POST') {
+    require_login();
+
+    $adId = $_POST['ad_id'] ?? '';
+    $photoIndex = (int) ($_POST['photo_index'] ?? -1);
+
+    if (!delete_ad_photo($adId, $photoIndex, current_user())) {
+        set_flash('danger', 'Photo could not be removed.');
+    } else {
+        set_flash('success', 'Photo removed.');
+    }
+
+    redirect_to('action=ads&edit=' . urlencode($adId));
 }
 
 if ($action === 'mark-advertised' && $method === 'POST') {

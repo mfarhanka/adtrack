@@ -15,6 +15,12 @@ function redirect(string $action): void
     exit;
 }
 
+function redirect_to(string $query): void
+{
+    header('Location: index.php?' . ltrim($query, '?'));
+    exit;
+}
+
 function set_flash(string $type, string $message): void
 {
     $_SESSION['flash'] = [
@@ -87,4 +93,14 @@ function count_ads_by_status(array $ads, string $status): int
 function storage_file(string $name): string
 {
     return app_path('data' . DIRECTORY_SEPARATOR . $name . '.json');
+}
+
+function ad_upload_directory(): string
+{
+    return app_path('uploads' . DIRECTORY_SEPARATOR . 'ad_photos');
+}
+
+function ad_upload_relative_path(string $filename): string
+{
+    return 'uploads/ad_photos/' . $filename;
 }

@@ -14,7 +14,7 @@ $hydratedAds = hydrate_ads($ads);
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4">
                 <h2 class="h4 mb-3"><?= $editingAd !== null ? 'Edit Ad' : 'Create Ad' ?></h2>
-                <form method="post" action="index.php?action=ads" class="vstack gap-3">
+                <form method="post" action="index.php?action=ads" class="vstack gap-3" enctype="multipart/form-data">
                     <?php if ($editingAd !== null): ?>
                         <input type="hidden" name="ad_id" value="<?= e($editingAd['id']) ?>">
                     <?php endif; ?>
@@ -51,6 +51,29 @@ $hydratedAds = hydrate_ads($ads);
                         <label class="form-label">Notes</label>
                         <textarea name="notes" rows="3" class="form-control"><?= e($editingAd['notes'] ?? '') ?></textarea>
                     </div>
+                    <div>
+                        <label class="form-label">Photos</label>
+                        <input type="file" name="photos[]" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+                        <div class="form-text">Upload one or more ad photos. Max 5MB each.</div>
+                    </div>
+                    <?php if ($editingAd !== null && ($editingAd['photos'] ?? []) !== []): ?>
+                        <div>
+                            <div class="small text-secondary mb-2">Current Photos</div>
+                            <div class="photo-grid photo-grid-editor">
+                                <?php foreach ($editingAd['photos'] as $photoIndex => $photo): ?>
+                                    <div class="photo-card">
+                                        <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
+                                        <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                        <form method="post" action="index.php?action=delete-photo">
+                                            <input type="hidden" name="ad_id" value="<?= e($editingAd['id']) ?>">
+                                            <input type="hidden" name="photo_index" value="<?= e((string) $photoIndex) ?>">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">Remove</button>
+                                        </form>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <button type="submit" class="btn btn-danger"><?= $editingAd !== null ? 'Update Ad' : 'Save Ad' ?></button>
                 </form>
             </div>
@@ -83,6 +106,16 @@ $hydratedAds = hydrate_ads($ads);
                                     <span class="badge rounded-pill soft-badge"><?= e((string) $ad['repeat_every_days']) ?> day cycle</span>
                                 </div>
                                 <pre id="ad-list-copy-<?= e($ad['id']) ?>" class="copy-box mt-3 mb-3"><?= e($ad['details']) ?></pre>
+                                <?php if (($ad['photos'] ?? []) !== []): ?>
+                                    <div class="photo-grid mb-3">
+                                        <?php foreach ($ad['photos'] as $photo): ?>
+                                            <a href="<?= e($photo['path']) ?>" target="_blank" rel="noreferrer" class="photo-card photo-link">
+                                                <img src="<?= e($photo['path']) ?>" alt="<?= e($photo['name'] ?? 'Ad photo') ?>" class="photo-thumb">
+                                                <div class="photo-meta"><?= e($photo['name'] ?? 'Photo') ?></div>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if ($ad['notes'] !== ''): ?>
                                     <div class="small text-secondary mb-3">Notes: <?= e($ad['notes']) ?></div>
                                 <?php endif; ?>
