@@ -8,6 +8,7 @@ Simple PHP ad tracking app for XAMPP with Bootstrap and a red theme.
 - User login for ad operators
 - Ad library with copyable ad details
 - Multi-photo upload for each ad
+- Auto-resize uploaded photos to max 1600px when GD is available
 - Schedule-based re-advertising tracker
 - Platforms: Carousell, mudah.my, Facebook Marketplace
 

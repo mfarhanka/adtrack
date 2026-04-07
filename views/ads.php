@@ -61,7 +61,7 @@ $editingPhotos = $editingAd !== null && isset($editingAd['photos']) && is_array(
                     <div>
                         <label class="form-label">Photos</label>
                         <input type="file" name="photos[]" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
-                        <div class="form-text">Upload one or more ad photos. Max 5MB each.</div>
+                        <div class="form-text">Upload one or more ad photos. Max 5MB each. Large images auto-resize to 1600px.</div>
                     </div>
                     <?php if ($editingAd !== null && $editingPhotos !== []): ?>
                         <div>

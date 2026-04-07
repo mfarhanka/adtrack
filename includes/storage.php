@@ -289,7 +289,7 @@ function store_uploaded_ad_photos($files)
         $filename = uniqid('photo_', true) . '.' . $extension;
         $destination = ad_upload_directory() . DIRECTORY_SEPARATOR . $filename;
 
-        if (!move_uploaded_file($tmpName, $destination)) {
+        if (!save_uploaded_ad_photo($tmpName, $destination, $mimeType)) {
             delete_ad_photo_files($storedPhotos);
             throw new RuntimeException('Unable to save uploaded photo.');
         }
@@ -302,6 +302,184 @@ function store_uploaded_ad_photos($files)
     }
 
     return $storedPhotos;
+}
+
+function save_uploaded_ad_photo($tmpName, $destination, $mimeType)
+{
+    if (should_resize_uploaded_photo($tmpName, $mimeType)) {
+        return resize_uploaded_ad_photo($tmpName, $destination, $mimeType, 1600);
+    }
+
+    return move_uploaded_file($tmpName, $destination);
+}
+
+function should_resize_uploaded_photo($tmpName, $mimeType)
+{
+    if (!function_exists('getimagesize')) {
+        return false;
+    }
+
+    if (!gd_supports_mime_type($mimeType)) {
+        return false;
+    }
+
+    $imageSize = @getimagesize($tmpName);
+
+    if ($imageSize === false) {
+        return false;
+    }
+
+    if (!isset($imageSize[0], $imageSize[1])) {
+        return false;
+    }
+
+    return $imageSize[0] > 1600 || $imageSize[1] > 1600;
+}
+
+function gd_supports_mime_type($mimeType)
+{
+    $loaders = [
+        'image/jpeg' => 'imagecreatefromjpeg',
+        'image/png' => 'imagecreatefrompng',
+        'image/gif' => 'imagecreatefromgif',
+        'image/webp' => 'imagecreatefromwebp',
+    ];
+    $savers = [
+        'image/jpeg' => 'imagejpeg',
+        'image/png' => 'imagepng',
+        'image/gif' => 'imagegif',
+        'image/webp' => 'imagewebp',
+    ];
+
+    return isset($loaders[$mimeType], $savers[$mimeType])
+        && function_exists($loaders[$mimeType])
+        && function_exists($savers[$mimeType])
+        && function_exists('imagecreatetruecolor')
+        && function_exists('imagecopyresampled');
+}
+
+function resize_uploaded_ad_photo($tmpName, $destination, $mimeType, $maxDimension)
+{
+    $imageSize = @getimagesize($tmpName);
+
+    if ($imageSize === false || !isset($imageSize[0], $imageSize[1])) {
+        return false;
+    }
+
+    $sourceWidth = (int) $imageSize[0];
+    $sourceHeight = (int) $imageSize[1];
+
+    if ($sourceWidth < 1 || $sourceHeight < 1) {
+        return false;
+    }
+
+    $scale = min($maxDimension / $sourceWidth, $maxDimension / $sourceHeight, 1);
+    $targetWidth = max(1, (int) round($sourceWidth * $scale));
+    $targetHeight = max(1, (int) round($sourceHeight * $scale));
+
+    if ($targetWidth === $sourceWidth && $targetHeight === $sourceHeight) {
+        return move_uploaded_file($tmpName, $destination);
+    }
+
+    $sourceImage = create_gd_image_from_upload($tmpName, $mimeType);
+
+    if (!$sourceImage) {
+        return move_uploaded_file($tmpName, $destination);
+    }
+
+    $targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
+
+    if (!$targetImage) {
+        imagedestroy($sourceImage);
+        return move_uploaded_file($tmpName, $destination);
+    }
+
+    prepare_resized_image_canvas($targetImage, $mimeType);
+
+    $copied = imagecopyresampled(
+        $targetImage,
+        $sourceImage,
+        0,
+        0,
+        0,
+        0,
+        $targetWidth,
+        $targetHeight,
+        $sourceWidth,
+        $sourceHeight
+    );
+
+    if (!$copied) {
+        imagedestroy($targetImage);
+        imagedestroy($sourceImage);
+        return move_uploaded_file($tmpName, $destination);
+    }
+
+    $saved = save_gd_image_to_path($targetImage, $destination, $mimeType);
+
+    imagedestroy($targetImage);
+    imagedestroy($sourceImage);
+
+    return $saved;
+}
+
+function create_gd_image_from_upload($tmpName, $mimeType)
+{
+    if ($mimeType === 'image/jpeg' && function_exists('imagecreatefromjpeg')) {
+        return @imagecreatefromjpeg($tmpName);
+    }
+
+    if ($mimeType === 'image/png' && function_exists('imagecreatefrompng')) {
+        return @imagecreatefrompng($tmpName);
+    }
+
+    if ($mimeType === 'image/gif' && function_exists('imagecreatefromgif')) {
+        return @imagecreatefromgif($tmpName);
+    }
+
+    if ($mimeType === 'image/webp' && function_exists('imagecreatefromwebp')) {
+        return @imagecreatefromwebp($tmpName);
+    }
+
+    return false;
+}
+
+function prepare_resized_image_canvas($targetImage, $mimeType)
+{
+    if ($mimeType === 'image/png' || $mimeType === 'image/gif' || $mimeType === 'image/webp') {
+        imagealphablending($targetImage, false);
+        imagesavealpha($targetImage, true);
+        $transparent = imagecolorallocatealpha($targetImage, 255, 255, 255, 127);
+        imagefilledrectangle(
+            $targetImage,
+            0,
+            0,
+            imagesx($targetImage),
+            imagesy($targetImage),
+            $transparent
+        );
+    }
+}
+
+function save_gd_image_to_path($image, $destination, $mimeType)
+{
+    if ($mimeType === 'image/jpeg' && function_exists('imagejpeg')) {
+        return imagejpeg($image, $destination, 82);
+    }
+
+    if ($mimeType === 'image/png' && function_exists('imagepng')) {
+        return imagepng($image, $destination, 6);
+    }
+
+    if ($mimeType === 'image/gif' && function_exists('imagegif')) {
+        return imagegif($image, $destination);
+    }
+
+    if ($mimeType === 'image/webp' && function_exists('imagewebp')) {
+        return imagewebp($image, $destination, 82);
+    }
+
+    return false;
 }
 
 function delete_ad_photo_files($photos)
@@ -346,10 +524,6 @@ function delete_ad_photo($adId, $photoIndex, $currentUser)
 
         return true;
     }
-
-    unset($ad);
-
-    return false;
 
     unset($ad);
 
