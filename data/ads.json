@@ -1,1 +1,40 @@
-[]
+[
+    {
+        "id": "ad_69df4ff617e573.35125869",
+        "user_id": "user_69d4bfccaccc60.59703927",
+        "title": "Insta360 Rent",
+        "platform": "carousell",
+        "details": "insta360 for rent",
+        "last_advertised_at": "2026-04-15",
+        "repeat_every_days": 3,
+        "notes": "",
+        "photos": [
+            {
+                "path": "uploads/ad_photos/photo_69df4ff6160fb8.45095988.jpg",
+                "name": "pic1.jpg",
+                "uploaded_at": "2026-04-15T10:44:38+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69df4ff6169b23.33748276.jpg",
+                "name": "pic2.jpg",
+                "uploaded_at": "2026-04-15T10:44:38+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69df4ff616fb66.18375107.jpg",
+                "name": "pic3.jpg",
+                "uploaded_at": "2026-04-15T10:44:38+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69df4ff6174fd4.27511447.jpg",
+                "name": "pic4.jpg",
+                "uploaded_at": "2026-04-15T10:44:38+02:00"
+            },
+            {
+                "path": "uploads/ad_photos/photo_69df4ff617ab96.56741390.jpg",
+                "name": "pic5.jpg",
+                "uploaded_at": "2026-04-15T10:44:38+02:00"
+            }
+        ],
+        "created_at": "2026-04-15T10:44:38+02:00"
+    }
+]

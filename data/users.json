@@ -6,5 +6,13 @@
         "password_hash": "$2y$10$t/SsmZy3iF3Cpl9DqpHbeeT6yP.DA7xM1A.AFWhhbXtWmDOBkxFvm",
         "role": "admin",
         "created_at": "2026-04-07T10:26:52+02:00"
+    },
+    {
+        "id": "user_69df4fac1ec892.98243325",
+        "name": "Ashiru",
+        "username": "ashiru",
+        "password_hash": "$2y$10$IwJnEb1KkPczVCJfphEsfOM.vdKBVGaDwi29Hl2jkUdjJf/7Ke46m",
+        "role": "user",
+        "created_at": "2026-04-15T10:43:24+02:00"
     }
 ]
