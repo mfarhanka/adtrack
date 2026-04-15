@@ -7,6 +7,7 @@ $editingDetails = $editingAd !== null && isset($editingAd['details']) ? $editing
 $editingLastAdvertised = $editingAd !== null && isset($editingAd['last_advertised_at']) ? $editingAd['last_advertised_at'] : now_date();
 $editingRepeatDays = $editingAd !== null && isset($editingAd['repeat_every_days']) ? $editingAd['repeat_every_days'] : 7;
 $editingNotes = $editingAd !== null && isset($editingAd['notes']) ? $editingAd['notes'] : '';
+$editingReadvertiseLink = $editingAd !== null && isset($editingAd['readvertise_link']) ? $editingAd['readvertise_link'] : '';
 $editingPhotos = $editingAd !== null && isset($editingAd['photos']) && is_array($editingAd['photos']) ? $editingAd['photos'] : [];
 ?>
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
@@ -57,6 +58,11 @@ $editingPhotos = $editingAd !== null && isset($editingAd['photos']) && is_array(
                     <div>
                         <label class="form-label">Notes</label>
                         <textarea name="notes" rows="3" class="form-control"><?= e($editingNotes) ?></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Re-Advertise Link</label>
+                        <input type="url" name="readvertise_link" class="form-control" placeholder="https://example.com/listing" value="<?= e($editingReadvertiseLink) ?>">
+                        <div class="form-text">Store the live post URL for this ad record.</div>
                     </div>
                     <div>
                         <label class="form-label">Photos</label>
@@ -126,13 +132,35 @@ $editingPhotos = $editingAd !== null && isset($editingAd['photos']) && is_array(
                                 <?php if ($ad['notes'] !== ''): ?>
                                     <div class="small text-secondary mb-3">Notes: <?= e($ad['notes']) ?></div>
                                 <?php endif; ?>
+                                <?php if ($ad['readvertise_link'] !== ''): ?>
+                                    <div class="small mb-3">Re-advertise link: <a href="<?= e($ad['readvertise_link']) ?>" target="_blank" rel="noreferrer"><?= e($ad['readvertise_link']) ?></a></div>
+                                <?php endif; ?>
+                                <form method="post" action="index.php?action=update-readvertise-link" class="row g-2 align-items-end mb-3">
+                                    <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
+                                    <input type="hidden" name="return_to" value="ads">
+                                    <div class="col-md-8">
+                                        <label class="form-label small text-secondary mb-1">Update Re-Advertise Link</label>
+                                        <input type="url" name="readvertise_link" class="form-control form-control-sm" placeholder="https://example.com/listing" value="<?= e($ad['readvertise_link']) ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Save Link</button>
+                                    </div>
+                                </form>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button type="button" class="btn btn-outline-danger btn-sm" data-copy-target="#ad-list-copy-<?= e($ad['id']) ?>">Copy details</button>
                                     <a class="btn btn-outline-dark btn-sm" href="index.php?action=ads&edit=<?= urlencode($ad['id']) ?>">Edit</a>
                                     <form method="post" action="index.php?action=mark-advertised">
                                         <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
+                                        <input type="hidden" name="return_to" value="ads">
                                         <button type="submit" class="btn btn-danger btn-sm">Mark Advertised</button>
                                     </form>
+                                    <?php if ($ad['previous_last_advertised_at'] !== null): ?>
+                                        <form method="post" action="index.php?action=withdraw-readvertise" onsubmit="return confirm('Withdraw the latest re-advertise action?');">
+                                            <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
+                                            <input type="hidden" name="return_to" value="ads">
+                                            <button type="submit" class="btn btn-outline-warning btn-sm">Withdraw Re-Advertise</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <form method="post" action="index.php?action=delete-ad" onsubmit="return confirm('Delete this ad?');">
                                         <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>

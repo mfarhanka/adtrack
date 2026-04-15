@@ -147,6 +147,8 @@ function create_ad($payload, $currentUser)
         'last_advertised_at' => $payload['last_advertised_at'],
         'repeat_every_days' => (int) $payload['repeat_every_days'],
         'notes' => $payload['notes'],
+        'readvertise_link' => isset($payload['readvertise_link']) ? $payload['readvertise_link'] : '',
+        'previous_last_advertised_at' => null,
         'photos' => isset($payload['photos']) ? $payload['photos'] : [],
         'created_at' => date(DATE_ATOM),
     ];
@@ -173,6 +175,7 @@ function update_ad($adId, $payload, $currentUser)
         $ad['last_advertised_at'] = $payload['last_advertised_at'];
         $ad['repeat_every_days'] = (int) $payload['repeat_every_days'];
         $ad['notes'] = $payload['notes'];
+        $ad['readvertise_link'] = isset($payload['readvertise_link']) ? $payload['readvertise_link'] : '';
         $ad['photos'] = array_merge(
             isset($ad['photos']) ? $ad['photos'] : [],
             isset($payload['photos']) ? $payload['photos'] : []
@@ -185,7 +188,7 @@ function update_ad($adId, $payload, $currentUser)
     save_ads($ads);
 }
 
-function mark_ad_as_advertised($adId, $currentUser)
+function mark_ad_as_advertised($adId, $currentUser, $readvertiseLink = null)
 {
     $ads = get_ads();
 
@@ -198,13 +201,76 @@ function mark_ad_as_advertised($adId, $currentUser)
             return;
         }
 
+        if ($ad['last_advertised_at'] !== now_date()) {
+            $ad['previous_last_advertised_at'] = $ad['last_advertised_at'];
+        }
+
         $ad['last_advertised_at'] = now_date();
+
+        if ($readvertiseLink !== null) {
+            $ad['readvertise_link'] = $readvertiseLink;
+        }
+
         break;
     }
 
     unset($ad);
 
     save_ads($ads);
+}
+
+function withdraw_advertised_ad($adId, $currentUser)
+{
+    $ads = get_ads();
+
+    foreach ($ads as &$ad) {
+        if ($ad['id'] !== $adId) {
+            continue;
+        }
+
+        if ($currentUser['role'] !== 'admin' && $ad['user_id'] !== $currentUser['id']) {
+            return false;
+        }
+
+        if (!isset($ad['previous_last_advertised_at']) || $ad['previous_last_advertised_at'] === null || $ad['previous_last_advertised_at'] === '') {
+            return false;
+        }
+
+        $ad['last_advertised_at'] = $ad['previous_last_advertised_at'];
+        $ad['previous_last_advertised_at'] = null;
+        $ad['readvertise_link'] = '';
+        save_ads($ads);
+
+        return true;
+    }
+
+    unset($ad);
+
+    return false;
+}
+
+function update_ad_readvertise_link($adId, $readvertiseLink, $currentUser)
+{
+    $ads = get_ads();
+
+    foreach ($ads as &$ad) {
+        if ($ad['id'] !== $adId) {
+            continue;
+        }
+
+        if ($currentUser['role'] !== 'admin' && $ad['user_id'] !== $currentUser['id']) {
+            return false;
+        }
+
+        $ad['readvertise_link'] = $readvertiseLink;
+        save_ads($ads);
+
+        return true;
+    }
+
+    unset($ad);
+
+    return false;
 }
 
 function delete_ad($adId, $currentUser)
@@ -263,6 +329,10 @@ function find_ad_for_user($adId, $currentUser)
 function normalize_ad_record($ad)
 {
     $ad['photos'] = isset($ad['photos']) && is_array($ad['photos']) ? array_values($ad['photos']) : [];
+    $ad['readvertise_link'] = isset($ad['readvertise_link']) && is_string($ad['readvertise_link']) ? trim($ad['readvertise_link']) : '';
+    $ad['previous_last_advertised_at'] = isset($ad['previous_last_advertised_at']) && is_string($ad['previous_last_advertised_at']) && $ad['previous_last_advertised_at'] !== ''
+        ? $ad['previous_last_advertised_at']
+        : null;
 
     return $ad;
 }

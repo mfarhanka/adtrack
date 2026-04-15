@@ -97,11 +97,21 @@ if ($action === 'ads' && $method === 'POST') {
     $lastAdvertisedAt = isset($_POST['last_advertised_at']) ? $_POST['last_advertised_at'] : '';
     $repeatEveryDays = (int) (isset($_POST['repeat_every_days']) ? $_POST['repeat_every_days'] : 0);
     $notes = trim(isset($_POST['notes']) ? $_POST['notes'] : '');
+    $readvertiseLink = trim(isset($_POST['readvertise_link']) ? $_POST['readvertise_link'] : '');
     $adId = isset($_POST['ad_id']) ? $_POST['ad_id'] : '';
     $uploadedPhotos = [];
 
     if ($title === '' || $platform === '' || $details === '' || $lastAdvertisedAt === '' || $repeatEveryDays < 1) {
         set_flash('danger', 'Title, platform, details, advertised date, and repeat schedule are required.');
+        if ($adId !== '') {
+            redirect_to('action=ads&edit=' . urlencode($adId));
+        }
+
+        redirect('ads');
+    }
+
+    if (!is_valid_optional_url($readvertiseLink)) {
+        set_flash('danger', 'Re-advertise link must be a valid URL.');
         if ($adId !== '') {
             redirect_to('action=ads&edit=' . urlencode($adId));
         }
@@ -127,6 +137,7 @@ if ($action === 'ads' && $method === 'POST') {
         'last_advertised_at' => $lastAdvertisedAt,
         'repeat_every_days' => $repeatEveryDays,
         'notes' => $notes,
+        'readvertise_link' => $readvertiseLink,
         'photos' => $uploadedPhotos,
     ];
 
@@ -158,9 +169,53 @@ if ($action === 'delete-photo' && $method === 'POST') {
 
 if ($action === 'mark-advertised' && $method === 'POST') {
     require_login();
-    mark_ad_as_advertised(isset($_POST['ad_id']) ? $_POST['ad_id'] : '', current_user());
+    $readvertiseLink = trim(isset($_POST['readvertise_link']) ? $_POST['readvertise_link'] : '');
+    $returnAction = isset($_POST['return_to']) && $_POST['return_to'] === 'dashboard' ? 'dashboard' : 'ads';
+
+    if ($readvertiseLink !== '' && !is_valid_optional_url($readvertiseLink)) {
+        set_flash('danger', 'Re-advertise link must be a valid URL.');
+        redirect($returnAction);
+    }
+
+    mark_ad_as_advertised(
+        isset($_POST['ad_id']) ? $_POST['ad_id'] : '',
+        current_user(),
+        $readvertiseLink !== '' ? $readvertiseLink : null
+    );
     set_flash('success', 'Advertised date updated to today.');
-    redirect('dashboard');
+    redirect($returnAction);
+}
+
+if ($action === 'withdraw-readvertise' && $method === 'POST') {
+    require_login();
+    $returnAction = isset($_POST['return_to']) && $_POST['return_to'] === 'dashboard' ? 'dashboard' : 'ads';
+
+    if (!withdraw_advertised_ad(isset($_POST['ad_id']) ? $_POST['ad_id'] : '', current_user())) {
+        set_flash('danger', 'Latest re-advertise action could not be withdrawn.');
+    } else {
+        set_flash('success', 'Latest re-advertise action withdrawn.');
+    }
+
+    redirect($returnAction);
+}
+
+if ($action === 'update-readvertise-link' && $method === 'POST') {
+    require_login();
+    $readvertiseLink = trim(isset($_POST['readvertise_link']) ? $_POST['readvertise_link'] : '');
+    $returnAction = isset($_POST['return_to']) && $_POST['return_to'] === 'dashboard' ? 'dashboard' : 'ads';
+
+    if (!is_valid_optional_url($readvertiseLink)) {
+        set_flash('danger', 'Re-advertise link must be a valid URL.');
+        redirect($returnAction);
+    }
+
+    if (!update_ad_readvertise_link(isset($_POST['ad_id']) ? $_POST['ad_id'] : '', $readvertiseLink, current_user())) {
+        set_flash('danger', 'Re-advertise link could not be updated.');
+    } else {
+        set_flash('success', $readvertiseLink === '' ? 'Re-advertise link removed.' : 'Re-advertise link updated.');
+    }
+
+    redirect($returnAction);
 }
 
 if ($action === 'delete-ad' && $method === 'POST') {

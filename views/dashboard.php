@@ -81,13 +81,24 @@ $upcomingAds = array_values(array_filter($ads, static function ($ad) {
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
-                                <div class="d-flex flex-wrap gap-2">
+                                <?php if ($ad['readvertise_link'] !== ''): ?>
+                                    <div class="small mb-3">Current link: <a href="<?= e($ad['readvertise_link']) ?>" target="_blank" rel="noreferrer"><?= e($ad['readvertise_link']) ?></a></div>
+                                <?php endif; ?>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
                                     <button type="button" class="btn btn-outline-danger btn-sm" data-copy-target="#ad-copy-<?= e($ad['id']) ?>">Copy details</button>
-                                    <form method="post" action="index.php?action=mark-advertised">
-                                        <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm">Mark Advertised Today</button>
-                                    </form>
                                 </div>
+                                <form method="post" action="index.php?action=mark-advertised" class="row g-2 align-items-end">
+                                    <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
+                                    <input type="hidden" name="return_to" value="dashboard">
+                                    <div class="col-md-8">
+                                        <label class="form-label small text-secondary mb-1">Re-Advertise Link</label>
+                                        <input type="url" name="readvertise_link" class="form-control form-control-sm" placeholder="https://example.com/listing" value="<?= e($ad['readvertise_link']) ?>">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="hidden" name="ad_id" value="<?= e($ad['id']) ?>">
+                                        <button type="submit" class="btn btn-danger btn-sm w-100">Mark Advertised Today</button>
+                                    </div>
+                                </form>
                             </div>
                         <?php endforeach; ?>
                     </div>

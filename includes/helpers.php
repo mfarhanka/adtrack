@@ -65,6 +65,15 @@ function platform_options()
     return ['carousell', 'mudah.my', 'facebook marketplace'];
 }
 
+function is_valid_optional_url($value)
+{
+    if ($value === '') {
+        return true;
+    }
+
+    return filter_var($value, FILTER_VALIDATE_URL) !== false;
+}
+
 function hydrate_ads($ads)
 {
     foreach ($ads as &$ad) {
