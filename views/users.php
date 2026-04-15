@@ -9,21 +9,29 @@
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body p-4">
-                <h2 class="h4 mb-3">Create User</h2>
+                <h2 class="h4 mb-3"><?= $editingUser !== null ? 'Edit User' : 'Create User' ?></h2>
                 <form method="post" action="index.php?action=users" class="vstack gap-3">
+                    <?php if ($editingUser !== null): ?>
+                        <input type="hidden" name="user_id" value="<?= e($editingUser['id']) ?>">
+                    <?php endif; ?>
                     <div>
                         <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" class="form-control" value="<?= $editingUser !== null ? e($editingUser['name']) : '' ?>" required>
                     </div>
                     <div>
                         <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" required>
+                        <input type="text" name="username" class="form-control" value="<?= $editingUser !== null ? e($editingUser['username']) : '' ?>" required>
                     </div>
                     <div>
-                        <label class="form-label">Password</label>
-                        <input type="text" name="password" class="form-control" required>
+                        <label class="form-label">Password<?= $editingUser !== null ? ' <span class="text-secondary fw-normal">(leave blank to keep current password)</span>' : '' ?></label>
+                        <input type="password" name="password" class="form-control" <?= $editingUser === null ? 'required' : '' ?>>
                     </div>
-                    <button type="submit" class="btn btn-danger">Create User</button>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger"><?= $editingUser !== null ? 'Update User' : 'Create User' ?></button>
+                        <?php if ($editingUser !== null): ?>
+                            <a href="index.php?action=users" class="btn btn-outline-secondary">Cancel</a>
+                        <?php endif; ?>
+                    </div>
                 </form>
             </div>
         </div>
@@ -52,10 +60,13 @@
                                 <td><?= e(substr($user['created_at'], 0, 10)) ?></td>
                                 <td class="text-end">
                                     <?php if ($user['role'] !== 'admin'): ?>
-                                        <form method="post" action="index.php?action=delete-user" onsubmit="return confirm('Delete this user and all ads?');">
-                                            <input type="hidden" name="user_id" value="<?= e($user['id']) ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                        </form>
+                                        <div class="d-inline-flex gap-2">
+                                            <a href="index.php?action=users&amp;edit=<?= urlencode($user['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                            <form method="post" action="index.php?action=delete-user" onsubmit="return confirm('Delete this user and all ads?');">
+                                                <input type="hidden" name="user_id" value="<?= e($user['id']) ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
+                                        </div>
                                     <?php endif; ?>
                                 </td>
                             </tr>

@@ -91,6 +91,30 @@ function create_user($name, $username, $password, $role)
     save_users($users);
 }
 
+function update_user($userId, $name, $username, $password)
+{
+    $users = get_users();
+
+    foreach ($users as &$user) {
+        if ($user['id'] !== $userId) {
+            continue;
+        }
+
+        $user['name'] = $name;
+        $user['username'] = $username;
+
+        if ($password !== '') {
+            $user['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        break;
+    }
+
+    unset($user);
+
+    save_users($users);
+}
+
 function delete_user($userId)
 {
     $removedAds = array_values(array_filter(get_ads(), static function ($ad) use ($userId) {

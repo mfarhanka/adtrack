@@ -32,17 +32,33 @@ if (!is_logged_in() && $action !== 'login') {
 if ($action === 'users' && $method === 'POST') {
     require_admin();
 
+    $userId = trim(isset($_POST['user_id']) ? $_POST['user_id'] : '');
     $name = trim(isset($_POST['name']) ? $_POST['name'] : '');
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
-    if ($name === '' || $username === '' || $password === '') {
-        set_flash('danger', 'Name, username, and password are required.');
+    if ($name === '' || $username === '' || ($userId === '' && $password === '')) {
+        set_flash('danger', $userId === '' ? 'Name, username, and password are required.' : 'Name and username are required.');
         redirect('users');
     }
 
-    if (find_user_by_username($username) !== null) {
+    $existingUser = find_user_by_username($username);
+
+    if ($existingUser !== null && $existingUser['id'] !== $userId) {
         set_flash('danger', 'That username is already taken.');
+        redirect_to($userId !== '' ? 'action=users&edit=' . urlencode($userId) : 'action=users');
+    }
+
+    if ($userId !== '') {
+        $user = find_user_by_id($userId);
+
+        if ($user === null || $user['role'] === 'admin') {
+            set_flash('danger', 'That user cannot be updated.');
+            redirect('users');
+        }
+
+        update_user($userId, $name, $username, $password);
+        set_flash('success', 'User updated successfully.');
         redirect('users');
     }
 
@@ -55,9 +71,15 @@ if ($action === 'delete-user' && $method === 'POST') {
     require_admin();
 
     $userId = isset($_POST['user_id']) ? $_POST['user_id'] : '';
+    $user = find_user_by_id($userId);
 
     if ($userId === current_user()['id']) {
         set_flash('danger', 'You cannot delete your own account.');
+        redirect('users');
+    }
+
+    if ($user === null || $user['role'] === 'admin') {
+        set_flash('danger', 'That user cannot be deleted.');
         redirect('users');
     }
 
@@ -152,12 +174,24 @@ $pageTitle = 'AdTrack';
 $currentUser = current_user();
 $users = [];
 $ads = [];
+$editingUser = null;
 $editingAd = null;
 
 if ($action === 'users') {
     require_admin();
     $pageTitle = 'User Management';
     $users = get_users();
+
+    $editUserId = isset($_GET['edit']) ? $_GET['edit'] : '';
+
+    if ($editUserId !== '') {
+        $editingUser = find_user_by_id($editUserId);
+
+        if ($editingUser === null || $editingUser['role'] === 'admin') {
+            set_flash('danger', 'That user cannot be edited here.');
+            redirect('users');
+        }
+    }
 }
 
 if ($action === 'ads') {
