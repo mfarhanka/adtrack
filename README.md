@@ -17,6 +17,7 @@ Simple PHP ad tracking app for XAMPP with Bootstrap and a red theme.
 
 - Username: `admin`
 - Password: `admin123`
+- For testing, the login screen also provides speed-login buttons for every role found in `data/users.json`.
 
 ## Run
 

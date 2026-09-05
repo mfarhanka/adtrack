@@ -30,7 +30,43 @@ function attempt_login($username, $password)
         return false;
     }
 
+    login_user($user);
+
+    return true;
+}
+
+function login_user($user)
+{
+    session_regenerate_id(true);
     $_SESSION['user_id'] = $user['id'];
+}
+
+function speed_login_users()
+{
+    $usersByRole = [];
+
+    foreach (get_users() as $user) {
+        $role = isset($user['role']) ? (string) $user['role'] : '';
+
+        if ($role !== '' && !isset($usersByRole[$role])) {
+            $usersByRole[$role] = $user;
+        }
+    }
+
+    ksort($usersByRole);
+
+    return $usersByRole;
+}
+
+function attempt_speed_login($role)
+{
+    $usersByRole = speed_login_users();
+
+    if (!isset($usersByRole[$role])) {
+        return false;
+    }
+
+    login_user($usersByRole[$role]);
 
     return true;
 }

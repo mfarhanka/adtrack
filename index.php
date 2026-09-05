@@ -7,6 +7,18 @@ $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET'
 $flash = get_flash();
 
 if ($action === 'login' && $method === 'POST') {
+    $speedRole = trim(isset($_POST['speed_role']) ? $_POST['speed_role'] : '');
+
+    if ($speedRole !== '') {
+        if (attempt_speed_login($speedRole)) {
+            set_flash('success', 'Signed in as ' . ucfirst($speedRole) . ' for testing.');
+            redirect('dashboard');
+        }
+
+        set_flash('danger', 'That testing role is not available.');
+        redirect('login');
+    }
+
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
@@ -266,6 +278,7 @@ if ($action === 'dashboard') {
 include __DIR__ . '/partials/header.php';
 
 if ($action === 'login') {
+    $speedLoginUsers = speed_login_users();
     include __DIR__ . '/views/login.php';
 } elseif ($action === 'users') {
     include __DIR__ . '/views/users.php';
